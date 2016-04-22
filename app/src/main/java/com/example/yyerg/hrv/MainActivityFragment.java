@@ -20,6 +20,11 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
 import java.util.ArrayList;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -29,6 +34,7 @@ public class MainActivityFragment extends Fragment {
     private View vChart;
 
     private ArrayList<Integer> RR;
+    private Random rand;
 
     public MainActivityFragment() {
     }
@@ -37,24 +43,33 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
+        RR = new ArrayList<Integer>();
+        RR.add(10);
+        RR.add(11);
+        RR.add(12);
                 llBarChart = (LinearLayout) rootView.findViewById(R.id.llBarChart);
-
+        rand = new Random();
         try{
             vChart = getBarChart("RR Interval", "ErrCode", "QTY", RR);
             llBarChart.removeAllViews();
             //llBarChart.addView(vChart);
             llBarChart.addView(vChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
-
         }catch(Exception e){
 
         }
+        ScheduledExecutorService scheduleTaskExecutor = Executors.newScheduledThreadPool(5);
+        final ScheduledFuture drawHandle =
+                scheduleTaskExecutor.scheduleAtFixedRate(drawThread, 5, 5, TimeUnit.SECONDS);
         return rootView;
     }
 
+
+
     private Runnable drawThread = new Runnable() {
         public void run() {
-
+            int i = rand.nextInt(1000 - 700) + 700;
+            RR.add(i);
+            getBarChart("RR Interval", "ErrCode", "QTY", RR);
         }
     };
 
@@ -99,13 +114,11 @@ public class MainActivityFragment extends Fragment {
 
         Series.add(0, 0);
         Renderer.addXTextLabel(0, "");
-        for(int r=0; r<xy.length; r++) {
+        for(int r=0; r<rr.size(); r++) {
             //Log.i("DEBUG", (r+1)+" "+xy[r][0]+"; "+xy[r][1]);
-            Renderer.addXTextLabel(r+1, xy[r][0]);
-            Series.add(r+1, Integer.parseInt(xy[r][1]));
+            Renderer.addXTextLabel(r+1, rr.get(r).toString());
+            Series.add(r+1, rr.get(r));
         }
-        Series.add(11, 0);
-        Renderer.addXTextLabel(xy.length+1, "");
 
         View view = ChartFactory.getBarChartView(getActivity(), Dataset, Renderer, Type.DEFAULT);
         return view;
