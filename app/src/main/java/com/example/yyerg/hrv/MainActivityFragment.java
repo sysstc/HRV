@@ -1,10 +1,6 @@
 package com.example.yyerg.hrv;
 
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Paint.Align;
-import android.graphics.Typeface;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -22,21 +18,21 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * A placeholder fragment containing a simple view.
- */
 public class MainActivityFragment extends Fragment {
     private LinearLayout llBarChart;
-    private View vChart;
+    private View vRRChart;
+    private View vFTChart;
 
-    private ArrayList<Integer> RR;
+    private FFTManager m_FTManager;
+
+    private ArrayList<Integer> m_RR;
+    private ArrayList<Integer> m_FT;
     private Random rand;
 
     public MainActivityFragment() {
@@ -47,16 +43,21 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         int i;
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        RR = new ArrayList<Integer>();
+        m_RR = new ArrayList<Integer>();
         for(i=0;i<30;i++){
-            RR.add(0);
+            m_RR.add(0);
         }
+        m_FTManager = new FFTManager();
+        m_FT = m_FTManager.TraditionalFT(m_RR);
+
         llBarChart = (LinearLayout) rootView.findViewById(R.id.llBarChart);
         rand = new Random();
         try{
-            vChart = getBarChart(RR);
+            vRRChart = getBarChart(m_RR);
+            vFTChart = getBarChart(m_FT);
             llBarChart.removeAllViews();
-            llBarChart.addView(vChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
+            llBarChart.addView(vRRChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
+            llBarChart.addView(vFTChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
         }catch(Exception e){
 
         }
@@ -72,10 +73,11 @@ public class MainActivityFragment extends Fragment {
         public void run() {
             int i = rand.nextInt(1000 - 700) + 700;
             Log.d(MainActivity.APP_TAG, "add: " + Integer.toString(i));
-            if(RR.size()==30) {
-                RR.remove(0);
+            if(m_RR.size()==30) {
+                m_RR.remove(0);
             }
-            RR.add(i);
+            m_RR.add(i);
+            m_FT = m_FTManager.TraditionalFT(m_RR);
             try{
                 Log.d(MainActivity.APP_TAG, "getBarChart");
             }catch(Exception e){
@@ -84,9 +86,11 @@ public class MainActivityFragment extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    vChart = getBarChart(RR);
+                    vRRChart = getBarChart(m_RR);
+                    vFTChart = getBarChart(m_FT);
                     llBarChart.removeAllViews();
-                    llBarChart.addView(vChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
+                    llBarChart.addView(vRRChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
+                    llBarChart.addView(vFTChart, new LayoutParams(LayoutParams.WRAP_CONTENT, 300));
                 }
             });
         }
@@ -134,13 +138,13 @@ public class MainActivityFragment extends Fragment {
     }
 
     private View getBarChart(ArrayList<Integer> RR){
-        String title = "RR";
+        String title = "m_RR";
         int[] barColors = new int[] { Color.CYAN};
 
         XYMultipleSeriesRenderer renderer = buildBarRenderer(barColors);
         renderer.setOrientation(XYMultipleSeriesRenderer.Orientation.HORIZONTAL);
 
-        setChartSettings(renderer, "RR", "time", "RR interval", 0.5,
+        setChartSettings(renderer, "m_RR", "time", "m_RR interval", 0.5,
                 30.5, 0, 1000, Color.GRAY, Color.RED);
         renderer.setXLabels(1);
         renderer.setYLabels(10);
